@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import pe.gob.sunat.participantes.dto.EventoDTO;
-import pe.gob.sunat.participantes.entities.Evento;
 import pe.gob.sunat.participantes.entities.Inscripcion;
 import pe.gob.sunat.participantes.entities.Participante;
 import pe.gob.sunat.participantes.feign.EventoClient;
@@ -57,15 +56,13 @@ public class InscripcionServiceImpl implements InscripcionService {
         Participante participante = optParticipante.get();
         
         // Verificar si el participante ya está inscrito en el evento
-        Evento evento = new Evento();
-        evento.setCodigoEvento(codigoEvento);
-        if (inscripcionRepo.existsByParticipanteAndEvento(participante, evento)) {
+        if (inscripcionRepo.existsByParticipanteAndEventoId(participante, codigoEvento)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("El participante ya está inscrito en el evento con código: " + codigoEvento);
         }
 
         // Verificar si la capacidad máxima del evento ha sido alcanzada
-        long inscritos = inscripcionRepo.countByEvento(evento);
+        long inscritos = inscripcionRepo.countByEventoId(codigoEvento);
         if (inscritos >= eventoDTO.getCapacidadMaxima()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Capacidad máxima alcanzada para el evento: " + codigoEvento);
@@ -74,7 +71,7 @@ public class InscripcionServiceImpl implements InscripcionService {
         // Registrar la nueva inscripción
         Inscripcion nueva = new Inscripcion();
         nueva.setParticipante(participante);
-        nueva.setEvento(evento);  // Cambiar para usar la entidad Evento
+        nueva.setEventoId(codigoEvento);
         inscripcionRepo.save(nueva);
 
         return ResponseEntity.status(HttpStatus.CREATED).body("Inscripción exitosa.");

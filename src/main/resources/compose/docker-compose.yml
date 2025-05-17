@@ -1,31 +1,8 @@
 version: "3.9"
 
 services:
-  eventos-db:
-    container_name: eventos-db
-    image: container-registry.oracle.com/database/express:21.3.0-xe
-    environment:
-      ORACLE_PWD: Netec_123
-      ORACLE_SID: XE
-      ORACLE_PDB: XEPDB1
-      ORACLE_CHARACTERSET: AL32UTF8
-    ports:
-      - "1521:1521"
-      - "5500:5500"
-    volumes:
-      - eventos-data:/opt/oracle/oradata
-      - ./scripts/eventos:/opt/oracle/scripts/startup
-    networks:
-      - g6-pfinal-network
-    healthcheck:
-      test: ["CMD", "sh", "-c", "echo 'SELECT 1 FROM DUAL;' | sqlplus system/Netec_123@localhost:1521/XE"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-
-  participantes-db:
-    container_name: participantes-db
+  pfinal-db:
+    container_name: pfinal-db
     image: container-registry.oracle.com/database/express:21.3.0-xe
     environment:
       ORACLE_PWD: Netec_123
@@ -36,8 +13,9 @@ services:
       - "1522:1521"
       - "5501:5500"
     volumes:
-      - participantes-data:/opt/oracle/oradata
+      - pfinal-data:/opt/oracle/oradata
       - ./scripts/participantes:/opt/oracle/scripts/startup
+      - ./scripts/eventos:/opt/oracle/scripts/startup
     networks:
       - g6-pfinal-network
     healthcheck:
@@ -55,7 +33,7 @@ services:
     networks:
       - g6-pfinal-network
     depends_on:
-      eventos-db:
+      pfinal-db:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:9084/eventos"]
@@ -72,7 +50,9 @@ services:
     networks:
       - g6-pfinal-network
     depends_on:
-      participantes-db:
+      pfinal-db:
+        condition: service_healthy
+      ms-eventos:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:9081/participantes"]
@@ -82,8 +62,7 @@ services:
       start_period: 30s
 
 volumes:
-  eventos-data:
-  participantes-data:
+  pfinal-data: 
 
 networks:
   g6-pfinal-network:

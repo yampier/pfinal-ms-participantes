@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import feign.FeignException;
 import pe.gob.sunat.participantes.dto.EventoDTO;
 import pe.gob.sunat.participantes.entities.Inscripcion;
 import pe.gob.sunat.participantes.entities.Participante;
@@ -44,11 +45,11 @@ public class InscripcionServiceImpl implements InscripcionService {
         EventoDTO eventoDTO;
         try {
             eventoDTO = eventoClient.obtenerEvento(codigoEvento);
-            if (eventoDTO == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Evento no encontrado con código: " + codigoEvento);
-            }
+        } catch (FeignException.NotFound e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Evento no encontrado con código: " + codigoEvento);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body("Error de comunicación con el microservicio de eventos.");
         }
